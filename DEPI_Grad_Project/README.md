@@ -35,7 +35,7 @@ The environment protects a reference workload consisting of an internet-facing l
 | 1 | Project Planning & Management | 16 Oct 2026 | Ready | [Project Planning PDF](docs/1_Project_Planning_and_Management.pdf) |
 | 2 | Literature Review | 16 Oct 2026 | Ready | [Literature Review PDF](docs/2_Literature_Review.pdf) |
 | 3 | Requirements Gathering | 16 Oct 2026 | Ready | [Requirements PDF](docs/3_Requirements_Gathering.pdf) |
-| 4 | System Analysis & Design | 6 Nov 2026 | Not started | [4_System_Design](docs/4_System_Design) |
+| 4 | System Analysis & Design | 6 Nov 2026 | Not started | [System_Design](docs/4_System_Design) |
 | 5 | Implementation (Source Code) | 30 Nov 2026 | Not started | [terraform](terraform), [lambda](lambda) |
 | 6 | Testing & Quality Assurance | 4 Dec 2026 | Not started | [docs/05-testing](docs/05-testing) |
 | 7 | Final Presentation & Reports | 4 Dec 2026 | Not started | [docs/06-final-presentation](docs/06-final-presentation) |
