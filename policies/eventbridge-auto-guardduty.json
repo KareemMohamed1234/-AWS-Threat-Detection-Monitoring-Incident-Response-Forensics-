@@ -1,0 +1,13 @@
+{
+  "source": ["aws.securityhub"],
+  "detail-type": ["Security Hub Findings - Imported"],
+  "detail": {
+    "findings": {
+      "ProductName": ["GuardDuty"],
+      "Severity": { "Label": ["HIGH", "CRITICAL"] },
+      "Workflow": { "Status": ["NEW"] },
+      "RecordState": ["ACTIVE"],
+      "Resources": { "Type": ["AwsEc2Instance", "AwsIamAccessKey"] }
+    }
+  }
+}

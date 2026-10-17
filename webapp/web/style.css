@@ -1,0 +1,32 @@
+:root{--bg:#f6f8fb;--card:#fff;--ink:#16202e;--muted:#5b6778;--line:#dfe5ee;--brand:#1f6feb;--ok:#1a7f4b;--warn:#b54708}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#0f1b2d;color:#fff}
+.bar{max-width:960px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.logo{font-weight:700;font-size:18px;letter-spacing:.3px}
+nav a{color:#c9d6ea;text-decoration:none;margin-right:16px}
+nav a:hover,nav a.on{color:#fff}
+.badge{margin-left:auto;font-size:13px;background:#16263f;border:1px solid #2a3d5c;border-radius:999px;padding:4px 12px;color:#bcd0ee}
+main{max-width:960px;margin:0 auto;padding:24px 20px 48px}
+h1{margin:8px 0 4px;font-size:28px}
+.lead{color:var(--muted);margin:0 0 24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h2{margin:0 0 12px;font-size:18px}
+label{display:block;font-size:14px;color:var(--muted);margin:12px 0 4px}
+input,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit}
+textarea{min-height:84px;resize:vertical}
+button{margin-top:14px;background:var(--brand);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.secondary{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+button:disabled{opacity:.6;cursor:wait}
+.msg{margin-top:12px;font-size:14px}.ok{color:var(--ok)}.err{color:#b42318}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.note{background:#fff7e6;border:1px solid #ffd591;color:var(--warn);border-radius:10px;padding:12px 14px;font-size:14px;margin-bottom:20px}
+pre{background:#0f1b2d;color:#d6e4ff;border-radius:10px;padding:14px;max-height:340px;overflow:auto;font-size:13px;margin:12px 0 0;white-space:pre-wrap}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{display:inline-block;margin-right:16px;font-size:14px;color:var(--muted)}
+.stat b{color:var(--ink)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:24px}

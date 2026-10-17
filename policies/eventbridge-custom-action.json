@@ -1,0 +1,5 @@
+{
+  "source": ["aws.securityhub"],
+  "detail-type": ["Security Hub Findings - Custom Action"],
+  "resources": ["arn:aws:securityhub:eu-north-1:<ACCOUNT_ID>:action/custom/IsolateCollect"]
+}

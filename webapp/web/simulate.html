@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SecureCart Lab - Simulation</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div class="bar"><span class="logo">SecureCart Lab</span>
+<nav><a href="/">Home</a><a class="on" href="/simulate.html">Simulation</a></nav>
+<span class="badge" id="server-badge">Served by ...</span></div></header>
+<main>
+  <h1>Traffic simulation</h1>
+  <p class="lead">Generate traffic against <b>this lab's own load balancer</b> so the logging pipeline has something to collect.</p>
+  <div class="note">Requests are sent only to this site (relative URLs) from your browser. Use it only in your own lab account.</div>
+  <section class="card">
+    <h2>Scenarios</h2>
+    <div class="row">
+      <button id="btn-normal" data-sim>Normal browsing (30 req)</button>
+      <button id="btn-scan" class="secondary" data-sim>Scanner-style probing (24 req)</button>
+      <button id="btn-burst" class="secondary" data-sim>Burst (200 req)</button>
+      <button id="btn-clear" class="secondary">Clear</button>
+    </div>
+    <p class="lead" style="margin-top:14px">Refresh the page a few times: the badge in the top-right shows which web server answered, so you can see the ALB alternating between Web-Server-1 and Web-Server-2.</p>
+    <pre id="log">Ready.
+</pre>
+  </section>
+</main>
+<footer>Lab environment - use fake data only.</footer>
+<script src="/app.js"></script>
+</body></html>

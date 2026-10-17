@@ -1,0 +1,52 @@
+description: Create forensic EBS snapshots of every volume attached to an instance, then notify SNS.
+schemaVersion: '0.3'
+assumeRole: '{{ AutomationAssumeRole }}'
+parameters:
+  InstanceId:
+    type: String
+    description: Instance to collect evidence from (i-...)
+  TopicArn:
+    type: String
+    description: SNS topic that receives the notification
+  AutomationAssumeRole:
+    type: String
+    description: IAM role the automation runs as
+mainSteps:
+  - name: snapshotVolumes
+    action: aws:executeScript
+    inputs:
+      Runtime: python3.11
+      Handler: handler
+      InputPayload:
+        InstanceId: '{{ InstanceId }}'
+      Script: |
+        import boto3
+
+        def handler(events, context):
+            ec2 = boto3.client("ec2")
+            iid = events["InstanceId"]
+            volumes = ec2.describe_volumes(
+                Filters=[{"Name": "attachment.instance-id", "Values": [iid]}])["Volumes"]
+            snapshots = []
+            for vol in volumes:
+                snap = ec2.create_snapshot(
+                    VolumeId=vol["VolumeId"],
+                    Description="Forensic evidence from " + iid,
+                    TagSpecifications=[{"ResourceType": "snapshot", "Tags": [
+                        {"Key": "Name", "Value": "Forensic-Evidence"},
+                        {"Key": "SourceInstance", "Value": iid},
+                        {"Key": "SourceVolume", "Value": vol["VolumeId"]}]}])
+                snapshots.append(snap["SnapshotId"])
+            return {"snapshots": snapshots}
+    outputs:
+      - Name: Snapshots
+        Selector: $.Payload.snapshots
+        Type: StringList
+  - name: notify
+    action: aws:executeAwsApi
+    inputs:
+      Service: sns
+      Api: Publish
+      TopicArn: '{{ TopicArn }}'
+      Subject: 'IR: forensic snapshots created'
+      Message: 'Forensic snapshots created for {{ InstanceId }}: {{ snapshotVolumes.Snapshots }}'

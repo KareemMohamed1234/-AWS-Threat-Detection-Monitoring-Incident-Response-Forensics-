@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SecureCart Lab</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div class="bar"><span class="logo">SecureCart Lab</span>
+<nav><a class="on" href="/">Home</a><a href="/simulate.html">Simulation</a></nav>
+<span class="badge" id="server-badge">Served by ...</span></div></header>
+<main>
+  <h1>Customer portal</h1>
+  <p class="lead">A small three-tier app used as the target for the incident response lab: ALB → web servers → app server → RDS, EBS and S3.</p>
+  <div class="grid">
+    <section class="card">
+      <h2>Register a customer</h2>
+      <form id="customer-form">
+        <label for="name">Name</label><input id="name" name="name" required maxlength="80" autocomplete="off">
+        <label for="email">Email</label><input id="email" name="email" type="email" required maxlength="120" autocomplete="off">
+        <label for="message">Note (optional)</label><textarea id="message" name="message" maxlength="500"></textarea>
+        <button type="submit">Save customer</button>
+        <div id="form-msg" class="msg"></div>
+      </form>
+    </section>
+    <section class="card">
+      <h2>Latest customers</h2>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Created (UTC)</th></tr></thead><tbody id="customers"><tr><td colspan="3">Loading...</td></tr></tbody></table>
+    </section>
+  </div>
+</main>
+<footer>Lab environment - use fake data only.</footer>
+<script src="/app.js"></script>
+</body></html>
