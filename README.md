@@ -2,7 +2,7 @@
 
 ## Project Architecture
 
-![Phase 1](docs/images/Architecture.pdf)
+![Diagram](docs/images/Architecture.png)
 
 A hands-on, step-by-step lab that builds a small AWS environment, collects and analyses its logs, detects threats, simulates three incidents, investigates them, and finally automates the response (SOAR).
 
