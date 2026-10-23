@@ -10,6 +10,8 @@ Everything is done in **one region: Europe (Stockholm) `eu-north-1`**. Follow th
 
 > ⚠️ **Cost & safety.** ALB, RDS, GuardDuty, Inspector, Macie, Detective and Config are billed. Use a dedicated lab account, use **fake data only**, and run the [Clean-up](#-clean-up) section when you finish.
 
+> 📸 Screenshots from a real run of this lab are placed under the step they belong to (Phases 3 and 4). They are stored in `docs/screenshots/`.
+
 ## 📋 Table of contents
 
 0. [Architecture overview](#-architecture-overview)
@@ -77,7 +79,7 @@ policies/               bucket policy, IAM and EventBridge JSON
 athena/                 SQL: tables + investigation queries
 lambda/soar_responder.py    SOAR Lambda
 ssm/forensic-snapshot-runbook.yaml   SSM Automation runbook
-tools/build.py          regenerates scripts/ and README.md from the sources above
+tools/build.py          regenerates scripts/*.sh from the sources above (the README is maintained by hand)
 ```
 
 ---
@@ -541,11 +543,39 @@ You should see folders for `AWSLogs/<ACCOUNT_ID>/CloudTrail`, `.../vpcflowlogs`,
 2. **Security standards**: make sure **AWS Foundational Security Best Practices** and the latest available **CIS AWS Foundations Benchmark** are enabled.
 3. **Integrations**: confirm _Amazon GuardDuty_, _Amazon Inspector_, _Amazon Macie_ and _AWS Config_ show as **Accepting findings** (they appear once each service is enabled below).
 
+**What you should see** – the Security Hub **Summary** dashboard (the numbers will be higher after you have run the Phase 4 incidents):
+
+![Security Hub Summary dashboard - filters, hub highlights and the trends overview](docs/screenshots/3.1-securityhub-summary-1.png)
+
+_Security Hub **Summary** dashboard - filters, hub highlights and the trends overview._
+
+![Summary: Threats, Exposures and top Resources by findings](docs/screenshots/3.1-securityhub-summary-2.png)
+
+_Summary: **Threats**, **Exposures** and top **Resources** by findings._
+
+![Summary: Posture, Vulnerabilities, Sensitive data and Security coverage (Inspector, GuardDuty, Macie)](docs/screenshots/3.1-securityhub-summary-3.png)
+
+_Summary: **Posture**, **Vulnerabilities**, **Sensitive data** and **Security coverage** (Inspector, GuardDuty, Macie)._
+
+![Summary: Remediation plans (for example, restrict internet access on a security group)](docs/screenshots/3.1-securityhub-summary-4.png)
+
+_Summary: **Remediation plans** (for example, restrict internet access on a security group)._
+
+![Summary: Top exposures and threats](docs/screenshots/3.1-securityhub-summary-5.png)
+
+_Summary: **Top exposures and threats**._
+
 ### Step 3.2 – Enable Amazon GuardDuty (CloudTrail + VPC Flow Logs + DNS analysis)
 
 1. **GuardDuty → Get started → Enable GuardDuty** (30-day free trial).
 2. **Protection plans** → enable **S3 Protection** and **Malware Protection for EC2** (EBS).
 3. Note your **Detector ID** (Settings) – used for sample findings later.
+
+**What you should see** – you will come back to the GuardDuty **Findings** page in Phase 4:
+
+![GuardDuty Findings page. After the Phase 4 scenarios you will see these three findings: the S3 public-access findings (High and Low) and the EC2 command-and-control finding (High)](docs/screenshots/3.2-guardduty-findings-list.png)
+
+_GuardDuty **Findings** page. After the Phase 4 scenarios you will see these three findings: the S3 public-access findings (High and Low) and the EC2 command-and-control finding (High)._
 
 ### Step 3.3 – Enable Amazon Inspector (scan the EC2 instances)
 
@@ -585,6 +615,16 @@ aws guardduty create-sample-findings --region eu-north-1 --detector-id <DETECTOR
   --finding-types Recon:EC2/PortProbeUnprotectedPort UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS
 ```
 
+**What you should see** – Security Hub -> **All findings** collects the findings of every service:
+
+![Security Hub All findings: the GuardDuty S3 findings and the Macie findings (bucket publicly accessible, Block Public Access disabled, shared with an external account) all land in one place](docs/screenshots/3.8-securityhub-all-findings-1.png)
+
+_Security Hub **All findings**: the GuardDuty S3 findings and the Macie findings (bucket publicly accessible, Block Public Access disabled, shared with an external account) all land in one place._
+
+![All findings, scrolled: further findings from Config, Inspector and Security Hub controls](docs/screenshots/3.8-securityhub-all-findings-2.png)
+
+_All findings, scrolled: further findings from Config, Inspector and Security Hub controls._
+
 ### Step 3.9 – Analyst triage notes + MITRE ATT&CK mapping
 
 The analyst triages findings and records them in a _triage note_ (the "Triage notes + MITRE ATT&CK mapping" document in the diagram). Template:
@@ -603,12 +643,12 @@ Next action / owner ..... (contain / monitor / close)
 
 Example mappings for this lab:
 
-| Scenario / finding                                                            | Tactic                       | Technique                                                            |
-| ----------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| EC2 contacting a command-and-control domain (`Backdoor:EC2/C2Activity.B!DNS`) | Command and Control (TA0011) | T1071.004 Application Layer Protocol: DNS                            |
-| Leaked IAM access key used from an unknown IP                                 | Initial Access (TA0001)      | T1078.004 Valid Accounts: Cloud Accounts                             |
-| Enumerating/reading the S3 data after key theft                               | Discovery / Collection       | T1619 Cloud Storage Object Discovery · T1530 Data from Cloud Storage |
-| Bucket made public, data readable by anyone                                   | Collection (TA0009)          | T1530 Data from Cloud Storage                                        |
+| Scenario / finding                                                             | Tactic                       | Technique                                                            |
+| ------------------------------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------- |
+| EC2 contacting a command-and-control domain (`Backdoor:EC2/C&CActivity.B!DNS`) | Command and Control (TA0011) | T1071.004 Application Layer Protocol: DNS                            |
+| Leaked IAM access key used from an unknown IP                                  | Initial Access (TA0001)      | T1078.004 Valid Accounts: Cloud Accounts                             |
+| Enumerating/reading the S3 data after key theft                                | Discovery / Collection       | T1619 Cloud Storage Object Discovery · T1530 Data from Cloud Storage |
+| Bucket made public, data readable by anyone                                    | Collection (TA0009)          | T1530 Data from Cloud Storage                                        |
 
 ✅ **Phase 3 done** – all signals converge in Security Hub, and an analyst can pivot into Detective.
 
@@ -626,6 +666,12 @@ Each scenario follows the diagram: **simulate → contain → capture evidence �
 2. **Forensic evidence bucket** – S3 → Create bucket `<EVIDENCE_BUCKET>`: Block all public access ON, **Versioning** on, and under _Advanced settings_ **Object Lock: Enable**. After creation: **Properties → Object Lock → Edit → Default retention: Governance, 30 days**. This makes the evidence tamper-resistant (chain of custody).
 3. Open an **incident record** for each scenario: ID `INC-<date>-1…3`, start time, analyst name.
 
+**Check** – the quarantine group must look like this (no rules at all):
+
+![Quarantine-SG with 0 inbound and 0 outbound rules ("Isolation SG - deny all")](docs/screenshots/4.0-quarantine-sg.png)
+
+_`Quarantine-SG` with **0 inbound and 0 outbound rules** ("Isolation SG - deny all")._
+
 ### Step 4.1 – Scenario 1: Compromised EC2 instance
 
 **Simulate** (a harmless DNS lookup that GuardDuty uses as an official test for command-and-control activity):
@@ -635,17 +681,73 @@ ssh -i ir-lab-key.pem ec2-user@<WEB2_PUBLIC_IP>
 nslookup guarddutyc2activityb.com
 ```
 
-Within ~5–20 minutes GuardDuty raises `Backdoor:EC2/C2Activity.B!DNS` (it flows to Security Hub).
+Within ~5–20 minutes GuardDuty raises `Backdoor:EC2/C&CActivity.B!DNS` (it flows to Security Hub).
+
+**What you should see** in GuardDuty:
+
+![GuardDuty finding Backdoor:EC2/C&CActivity.B!DNS (High) - the instance queried a known command-and-control domain](docs/screenshots/4.1-guardduty-c2-overview.png)
+
+_GuardDuty finding `Backdoor:EC2/C&CActivity.B!DNS` (High) - the instance queried a known command-and-control domain._
+
+![Finding details: malware scan result, affected resource and instance details (Web-Server-2)](docs/screenshots/4.1-guardduty-c2-instance.png)
+
+_Finding details: malware scan result, affected resource and instance details (`Web-Server-2`)._
+
+![Finding details: network interface, private/public IP and the security group (here already Quarantine-SG after containment)](docs/screenshots/4.1-guardduty-c2-network.png)
+
+_Finding details: network interface, private/public IP and the security group (here already `Quarantine-SG` after containment)._
+
+![Finding details: action DNS_REQUEST and the actor domain guarddutyc2activityb.com (the official GuardDuty test domain)](docs/screenshots/4.1-guardduty-c2-domain.png)
+
+_Finding details: action `DNS_REQUEST` and the actor domain `guarddutyc2activityb.com` (the official GuardDuty test domain)._
 
 **Contain** – isolate the instance:
 
 1. EC2 → `Web-Server-2` → **Actions → Security → Change security groups** → remove `Web-Server-SG`, add **`Quarantine-SG`** → Save.
 2. Watch **Target groups → `web-tg`**: `Web-Server-2` turns _unhealthy_, and the site keeps working on `Web-Server-1` – this is why we run two.
 
+**What you should see** after isolating `Web-Server-2`:
+
+![Web-Server-2 is still Running, but its only security group is now Quarantine-SG (EC2 -> Instances -> Security tab)](docs/screenshots/4.1-ec2-web-server-2-quarantined.png)
+
+_`Web-Server-2` is still **Running**, but its only security group is now **`Quarantine-SG`** (EC2 -> Instances -> Security tab)._
+
+![Target group web-tg: Web-Server-2 is Unhealthy (request timed out) while Web-Server-1 stays Healthy - the site keeps working](docs/screenshots/4.1-target-group-unhealthy.png)
+
+_Target group `web-tg`: `Web-Server-2` is **Unhealthy** (request timed out) while `Web-Server-1` stays **Healthy** - the site keeps working._
+
+The isolation is itself an auditable API call in CloudTrail (**CloudTrail -> Event history**, filter _Event name = ModifyNetworkInterfaceAttribute_):
+
+![CloudTrail Event history: the isolation itself is logged as ModifyNetworkInterfaceAttribute (who, when, from which IP, which network interface and security group)](docs/screenshots/4.1-cloudtrail-modify-eni.png)
+
+_CloudTrail **Event history**: the isolation itself is logged as `ModifyNetworkInterfaceAttribute` (who, when, from which IP, which network interface and security group)._
+
+![Same event, Event record (JSON) - top part: userIdentity, eventTime, eventName, sourceIPAddress](docs/screenshots/4.1-cloudtrail-modify-eni-json-1.png)
+
+_Same event, **Event record** (JSON) - top part: `userIdentity`, `eventTime`, `eventName`, `sourceIPAddress`._
+
+![Same event, JSON - lower part: requestParameters shows the new groupSet (the Quarantine-SG ID) and responseElements](docs/screenshots/4.1-cloudtrail-modify-eni-json-2.png)
+
+_Same event, JSON - lower part: `requestParameters` shows the new `groupSet` (the Quarantine-SG ID) and `responseElements`._
+
 **Evidence** – snapshot the disk:
 
 1. EC2 → **Volumes** → select the volume attached to `Web-Server-2` → **Actions → Create snapshot**, description `Forensic evidence INC-<date>-1`, tag `Name = Forensic-Evidence`.
 2. Record the snapshot ID and the time in the incident record. Keep the instance **running and isolated** (do not terminate – you may need memory/process evidence).
+
+**What you should see** – the forensic snapshot (EC2 -> Snapshots):
+
+![Forensic EBS snapshot Forensic-Evidence of the isolated instance: Completed, 100 %, with its source volume](docs/screenshots/4.1-ebs-snapshot-details.png)
+
+_Forensic EBS snapshot `Forensic-Evidence` of the isolated instance: **Completed**, 100 %, with its source volume._
+
+![Snapshot settings: encryption and Snapshot Lock status](docs/screenshots/4.1-ebs-snapshot-settings.png)
+
+_Snapshot settings: encryption and **Snapshot Lock** status._
+
+![Snapshot share permissions: Private, shared with 0 accounts](docs/screenshots/4.1-ebs-snapshot-sharing.png)
+
+_Snapshot share permissions: **Private**, shared with 0 accounts._
 
 ### Step 4.2 – Scenario 2: Exposed IAM access keys
 
@@ -661,11 +763,72 @@ aws iam list-users --profile leaked          # AccessDenied - recon attempt, als
 
 These calls show up in CloudTrail within minutes. GuardDuty may not alert for this low-volume test, so find it yourself with **Athena query #3** in `athena/03-investigation-queries.sql` (calls by `app-storage-user` grouped by source IP – the CloudShell IP stands out). Use sample findings (Step 3.8) to exercise Security Hub.
 
+Query 1 - everything the user did (screenshot below):
+
+```sql
+SELECT eventtime, eventname, sourceipaddress, errorcode
+FROM ir_lab.cloudtrail_logs
+WHERE useridentity.username = 'app-storage-user'
+ORDER BY eventtime;
+```
+
+![Athena: every API call made by app-storage-user (query below)](docs/screenshots/4.2-athena-key-activity-query.png)
+
+_Athena: every API call made by `app-storage-user` (query below)._
+
+![Result: calls from the app server's private IP (10.0.11.x) and, in between, calls from another IP (CloudShell) including the AccessDenied ListUsers](docs/screenshots/4.2-athena-key-activity-results.png)
+
+_Result: calls from the app server's private IP (`10.0.11.x`) and, in between, calls from another IP (CloudShell) including the `AccessDenied` `ListUsers`._
+
+Query 2 - group by key, source IP and user agent (`athena/03-investigation-queries.sql`, query #7):
+
+```sql
+SELECT useridentity.accesskeyid AS key_id,
+       sourceipaddress,
+       useragent,
+       count(*) AS calls,
+       min(eventtime) AS first_seen,
+       max(eventtime) AS last_seen
+FROM ir_lab.cloudtrail_logs
+WHERE useridentity.username = 'app-storage-user'
+GROUP BY 1, 2, 3
+ORDER BY first_seen;
+```
+
+![Athena: the same activity grouped by access key, source IP and user agent (query below)](docs/screenshots/4.2-athena-key-by-ip-query.png)
+
+_Athena: the same activity grouped by access key, source IP and user agent (query below)._
+
+![Result: the old key was used from CloudShell (exec-env/CloudShell user agent), the new key only from the app server](docs/screenshots/4.2-athena-key-by-ip-results.png)
+
+_Result: the old key was used from CloudShell (`exec-env/CloudShell` user agent), the new key only from the app server._
+
+The same activity from the CLI. IAM is a global service, so IAM calls (like the denied `ListUsers`) are recorded in `us-east-1`; look in both Regions:
+
+```bash
+for R in eu-north-1 us-east-1; do
+  aws cloudtrail lookup-events --region $R \
+    --lookup-attributes AttributeKey=Username,AttributeValue=app-storage-user \
+    --max-results 50 --output json \
+    | jq -r '.Events[].CloudTrailEvent | fromjson | [.eventTime,.eventName,.sourceIPAddress,(.errorCode // "-")] | @tsv'
+done
+```
+
+![aws cloudtrail lookup-events for app-storage-user. In eu-north-1 you see the S3/STS calls from the unknown IP; the denied IAM call (ListUsers -> AccessDenied) is logged in us-east-1, because IAM is a global service](docs/screenshots/4.2-cloudtrail-cli-lookup.png)
+
+_`aws cloudtrail lookup-events` for `app-storage-user`. In `eu-north-1` you see the S3/STS calls from the unknown IP; the denied IAM call (`ListUsers` -> `AccessDenied`) is logged in **`us-east-1`**, because IAM is a global service._
+
 **Contain** – revoke and rotate:
 
 1. IAM → Users → `app-storage-user` → **Security credentials** → **Make inactive** the exposed key.
 2. Create a new access key; on the app server edit `/etc/lab-app.env` with the new values and run `sudo systemctl restart lab-app`; then **delete** the old key.
 3. Delete the `leaked` profile from CloudShell (`aws configure --profile leaked` and clear it, or `rm ~/.aws/credentials`).
+
+**What you should see** – only the new key is left and it is **Active**:
+
+![IAM -> app-storage-user -> Security credentials: after rotation there is a single Active access key](docs/screenshots/4.2-iam-new-access-key.png)
+
+_IAM -> `app-storage-user` -> Security credentials: after rotation there is a single **Active** access key._
 
 **Evidence** – capture the activity of that key (CloudTrail + CloudWatch Logs) as described in [Step 4.4](#step-44--collect-and-preserve-evidence).
 
@@ -694,10 +857,55 @@ These calls show up in CloudTrail within minutes. GuardDuty may not alert for th
 3. Test it from a private browser window: `https://<DATA_BUCKET>.s3.eu-north-1.amazonaws.com/sensitive/sample-customers.csv`.
 4. Within minutes AWS Config flags `s3-bucket-public-read-prohibited` as **Non-compliant**, and the finding appears in Security Hub.
 
+**What you should see** in GuardDuty (two findings from the policy change and the Block Public Access change):
+
+![GuardDuty finding Policy:S3/BucketAnonymousAccessGranted (High) - the bucket was granted public anonymous access by a PutBucketPolicy call](docs/screenshots/4.3-guardduty-s3-public-overview.png)
+
+_GuardDuty finding `Policy:S3/BucketAnonymousAccessGranted` (High) - the bucket was granted public anonymous access by a `PutBucketPolicy` call._
+
+![Finding details: the IAM user and access key that made the change, and the bucket (Effective permission: PUBLIC)](docs/screenshots/4.3-guardduty-s3-public-resource.png)
+
+_Finding details: the IAM user and access key that made the change, and the bucket (`Effective permission: PUBLIC`)._
+
+![Finding details: API PutBucketPolicy and the source IP that made the call](docs/screenshots/4.3-guardduty-s3-public-actor.png)
+
+_Finding details: API `PutBucketPolicy` and the source IP that made the call._
+
+![GuardDuty finding Policy:S3/BucketBlockPublicAccessDisabled (Low) - Block Public Access was switched off (PutBucketPublicAccessBlock)](docs/screenshots/4.3-guardduty-s3-bpa-overview.png)
+
+_GuardDuty finding `Policy:S3/BucketBlockPublicAccessDisabled` (Low) - Block Public Access was switched off (`PutBucketPublicAccessBlock`)._
+
+![Finding details: affected access key, user and bucket](docs/screenshots/4.3-guardduty-s3-bpa-resource.png)
+
+_Finding details: affected access key, user and bucket._
+
+![Finding details: API PutBucketPublicAccessBlock and the caller's IP address](docs/screenshots/4.3-guardduty-s3-bpa-actor.png)
+
+_Finding details: API `PutBucketPublicAccessBlock` and the caller's IP address._
+
 **Contain** – close it:
 
 1. **Delete** the `TempPublicRead` statement (or the whole bucket policy).
 2. **Block public access → Edit → turn ON all four → Save**.
+3. Verify from CloudShell that the file is no longer public (expect `403 Forbidden`):
+
+```bash
+curl -I "https://<DATA_BUCKET>.s3.eu-north-1.amazonaws.com/sensitive/sample-customers.csv"
+```
+
+![From CloudShell, the same URL now returns HTTP/1.1 403 Forbidden - the bucket is closed again](docs/screenshots/4.3-contain-verify-403.png)
+
+_From CloudShell, the same URL now returns **HTTP/1.1 403 Forbidden** - the bucket is closed again._
+
+AWS Config records the whole story on the bucket's timeline (**AWS Config -> Resources -> your bucket -> Resource timeline**): noncompliant while it was public, compliant again after you closed it.
+
+![AWS Config resource timeline of the data bucket: the s3-bucket-public-read-prohibited rule turned Noncompliant (red) when the bucket was opened and All compliant (green) after you closed it](docs/screenshots/4.3-config-timeline-1.png)
+
+_AWS Config resource timeline of the data bucket: the `s3-bucket-public-read-prohibited` rule turned **Noncompliant** (red) when the bucket was opened and **All compliant** (green) after you closed it._
+
+![Earlier part of the same timeline (configuration changes, CloudTrail events and rule evaluations from Phase 1-3)](docs/screenshots/4.3-config-timeline-2.png)
+
+_Earlier part of the same timeline (configuration changes, CloudTrail events and rule evaluations from Phase 1-3)._
 
 **Evidence** – the `PutBucketPolicy` / `PutBucketPublicAccessBlock` events in CloudTrail (Athena query #4) and the access log lines in `s3-access-logs/` show who changed it and who downloaded the file.
 
@@ -711,6 +919,9 @@ INC=INC-2026-001; mkdir -p $INC && cd $INC
 # 1) API activity of the exposed key's user (CloudTrail)
 aws cloudtrail lookup-events --region eu-north-1 \
   --lookup-attributes AttributeKey=Username,AttributeValue=app-storage-user > cloudtrail-app-storage-user.json
+# 1b) IAM calls are global and are recorded in us-east-1
+aws cloudtrail lookup-events --region us-east-1 \
+  --lookup-attributes AttributeKey=Username,AttributeValue=app-storage-user > cloudtrail-app-storage-user-us-east-1.json
 
 # 2) The snapshots taken as evidence
 aws ec2 describe-snapshots --region eu-north-1 --owner-ids self \
@@ -1069,7 +1280,7 @@ def handler(event, context):
 **Test 1 – analyst-triggered (safest first):**
 
 1. If `Web-Server-2` is still quarantined from Scenario 1, restore it first (see _Rollback_ below).
-2. In **Security Hub → Findings**, select the GuardDuty finding `Backdoor:EC2/C2Activity.B!DNS` from Scenario 1 (or trigger a new one with the DNS lookup) → **Actions → Isolate and Collect**.
+2. In **Security Hub → Findings**, select the GuardDuty finding `Backdoor:EC2/C&CActivity.B!DNS` from Scenario 1 (or trigger a new one with the DNS lookup) → **Actions → Isolate and Collect**.
 3. Verify within a minute or two:
    - ✉️ e-mails from `ir-alerts` (response summary + snapshot IDs)
    - EC2: `Web-Server-2` now uses `Quarantine-SG` and has the tag `IR-Status = Quarantined`
